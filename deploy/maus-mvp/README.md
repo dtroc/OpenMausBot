@@ -18,7 +18,10 @@ a high port, so it does not need this capability. Keeping the file capability
 with a runtime `cap_drop: ALL` bounding set can cause execution to fail with
 `operation not permitted`. Runtime user, capability drop and no-new-privileges
 remain unchanged; validate the derived image, not the upstream base image. Squid permits CONNECT on the TLS port to exact OpenAI hosts, denies
-private destinations, and listens only on the internal network. It is not a TLS
+private destinations, and listens only on the internal network. Squid's file
+descriptor limit and its container soft/hard `nofile` limits are all 1024, avoiding
+large startup allocations inherited from host defaults while retaining the memory
+ceiling. Measure actual proxy memory use after deployment. It is not a TLS
 interception proxy. CONNECT filtering controls hosts and ports, not encrypted
 paths or content. Data given to agents can reach the authorized LLM provider.
 
