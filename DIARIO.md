@@ -11,3 +11,12 @@
   limitaciones del firewall al reiniciar/recargar y pruebas de aceptación.
 - Validación estática local; despliegue, parsers de imágenes y autenticación real
   pendientes. No se ha ejecutado ningún agente ni accedido a datos del usuario.
+
+### Corrección de ejecución de Caddy
+
+- Confirmada la capacidad de archivo `cap_net_bind_service=ep` en la imagen
+  oficial seleccionada, incompatible con la ejecución restringida prevista.
+- Añadido `Caddy.Dockerfile` para quitar esa capacidad durante la construcción;
+  el servicio web usa la imagen derivada y mantiene usuario sin privilegios,
+  `cap_drop: ALL` y `no-new-privileges`.
+- La validación de ejecución y configuración de la imagen derivada sigue pendiente.
