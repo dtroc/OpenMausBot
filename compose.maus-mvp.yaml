@@ -1,0 +1,141 @@
+# Private UI through SSH only. See deploy/maus-mvp/README.md before deploying.
+# Required image values must be immutable repository@sha256:... references.
+services:
+  omb:
+    build:
+      context: ./deploy/maus-mvp
+      args:
+        BASE_IMAGE: ${MAUS_BASE_IMAGE:?Set a verified OpenMausBot image digest}
+        CODEX_VERSION: ${MAUS_CODEX_VERSION:?Set an exact Codex CLI version}
+    image: maus-mvp-local:codex
+    init: true
+    user: maus
+    restart: "no"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1024m
+    memswap_limit: 1024m
+    cpus: 0.75
+    pids_limit: 128
+    shm_size: 16m
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=64m,mode=1777
+    environment:
+      HOME: /data
+      OMB_DATA_DIR: /data/.openmausbot
+      OMB_PORT: "8799"
+      OMB_WEBHOOK_PORT: "8800"
+      OMB_PUBLIC_URL: http://localhost:18080
+      OMB_WEBHOOK_PUBLIC_URL: http://localhost:18080
+      HTTP_PROXY: http://172.30.50.2:3128
+      HTTPS_PROXY: http://172.30.50.2:3128
+      http_proxy: http://172.30.50.2:3128
+      https_proxy: http://172.30.50.2:3128
+      NO_PROXY: localhost,127.0.0.1,::1
+      no_proxy: localhost,127.0.0.1,::1
+      NODE_USE_ENV_PROXY: "1"
+    volumes:
+      - type: bind
+        source: /opt/maus-mvp/state/data
+        target: /data
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /opt/maus-mvp/state/marketdata
+        target: /marketdata
+        read_only: true
+        bind:
+          create_host_path: false
+    networks:
+      internal:
+        ipv4_address: 172.30.50.3
+    ports:
+      - "127.0.0.1:18080:8080"
+    depends_on:
+      egress:
+        condition: service_started
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:8799/api/health', {signal: AbortSignal.timeout(4000)}).then(async r => {if (!r.ok || !(await r.text()).includes('openmausbot')) process.exit(1)}).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    logging: &bounded-logs
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: "2"
+
+  web:
+    image: ${MAUS_CADDY_IMAGE:?Set a verified Caddy image digest}
+    user: "65534:65534"
+    init: true
+    restart: "no"
+    network_mode: service:omb
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 96m
+    memswap_limit: 96m
+    cpus: 0.15
+    pids_limit: 32
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,noexec,size=8m,mode=1777
+      - /data:rw,nosuid,nodev,noexec,size=8m,mode=1777
+      - /config:rw,nosuid,nodev,noexec,size=8m,mode=1777
+    entrypoint: [caddy]
+    command: [run, --config, /etc/caddy/Caddyfile, --adapter, caddyfile]
+    volumes:
+      - type: bind
+        source: ./deploy/maus-mvp/Caddyfile
+        target: /etc/caddy/Caddyfile
+        read_only: true
+        bind:
+          create_host_path: false
+    depends_on:
+      omb:
+        condition: service_healthy
+    logging: *bounded-logs
+
+  egress:
+    image: ${MAUS_SQUID_IMAGE:?Set a verified Ubuntu Squid 6 or 7 image digest}
+    user: "65534:65534"
+    init: true
+    restart: "no"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 128m
+    memswap_limit: 128m
+    cpus: 0.15
+    pids_limit: 32
+    sysctls:
+      net.ipv4.ip_forward: "0"
+      net.ipv6.conf.all.disable_ipv6: "1"
+    dns: [185.12.64.1, 185.12.64.2]
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,noexec,size=16m,mode=1777
+    entrypoint: [/usr/sbin/squid]
+    command: [-N, -f, /etc/squid/squid.conf]
+    volumes:
+      - type: bind
+        source: ./deploy/maus-mvp/squid.conf
+        target: /etc/squid/squid.conf
+        read_only: true
+        bind:
+          create_host_path: false
+    networks:
+      internal:
+        ipv4_address: 172.30.50.2
+      egress:
+        ipv4_address: 172.30.51.2
+    logging: *bounded-logs
+
+networks:
+  internal:
+    external: true
+    name: maus-internal
+  egress:
+    external: true
+    name: maus-egress
