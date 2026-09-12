@@ -9,12 +9,13 @@
         @hooks path /hooks /hooks/*
         respond @hooks 403
 
-        # HTTPS has already terminated at Cloudflare. Only the dedicated
-        # connector may use this host. Access JWT validation belongs to
-        # cloudflared ("Protect with Access"), not to this Host matcher.
+        # Docker masquerades cross-bridge ingress to this internal gateway.
+        # The host firewall restricts the original source to the connector
+        # before NAT; host-local processes remain trusted. Keep that filter.
+        # cloudflared must validate Access JWTs ("Protect with Access").
         @cloudflare {
             host {$MAUS_HTTPS_HOST:disabled.invalid}
-            remote_ip 172.30.52.2
+            remote_ip 172.30.50.1
         }
         handle @cloudflare {
             reverse_proxy 127.0.0.1:8799 {
