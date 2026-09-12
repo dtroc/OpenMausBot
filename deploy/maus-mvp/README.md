@@ -12,7 +12,12 @@ It does not rebuild the application from this fork's TypeScript source. Updating
 the fork and updating the runtime image are separate operations.
 
 Caddy provides an SSH-only localhost UI while preserving the harness loopback
-listener. Squid permits CONNECT on the TLS port to exact OpenAI hosts, denies
+listener. `Caddy.Dockerfile` derives from the pinned official image and removes
+its executable's `cap_net_bind_service` file capability during build. Caddy uses
+a high port, so it does not need this capability. Keeping the file capability
+with a runtime `cap_drop: ALL` bounding set can cause execution to fail with
+`operation not permitted`. Runtime user, capability drop and no-new-privileges
+remain unchanged; validate the derived image, not the upstream base image. Squid permits CONNECT on the TLS port to exact OpenAI hosts, denies
 private destinations, and listens only on the internal network. It is not a TLS
 interception proxy. CONNECT filtering controls hosts and ports, not encrypted
 paths or content. Data given to agents can reach the authorized LLM provider.
