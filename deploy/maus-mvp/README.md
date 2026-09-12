@@ -53,6 +53,38 @@ provide an absolute virtual-machine boundary.
 
 ## Coolify
 
+### Proxy network discovery: version-specific compatibility
+
+Coolify 4.3.19 Raw deployments still add management metadata. Its proxy network
+reconciliation selects containers with `coolify.managed=true` and attaches the
+shared proxy to their networks, including external networks. Raw mode and no
+public domain alone do not establish the intended network separation.
+
+Each service therefore declares the valid Compose key-only label
+`- coolify.managed` (empty value), plus `- traefik.enable=false`. In the inspected
+4.3.19 `Application::oldRawParser`, the exact key-only entry prevents insertion of
+`coolify.managed=true`; the proxy's exact-value selector then excludes it. Keep
+this list representation: substituting a map or `coolify.managed=false` does not
+have the same parser behavior in that version. This is version-specific metadata
+compatibility, not an official general-purpose Coolify network isolation feature.
+No Coolify application code, permissions or host-wide proxy settings are changed.
+
+Manual deployment cleanup uses the separate applicationId label in the inspected
+version, which remains generated. Automatic status/monitoring that depends on
+managed=true may not report these containers correctly; inspect Docker state.
+Before deployment, remove obsolete containers of this application that still have
+managed=true, and detach the shared proxy from this application's two dedicated
+networks only. After recreation, verify the effective managed label is empty and
+that the shared proxy remains absent after background reconciliation. Revalidate
+all of this after any Coolify update, before supplying agent credentials. If the
+parser changes or the proxy returns, stop this stack and use an independently
+managed Compose deployment instead of weakening network isolation.
+
+Sources: Docker Compose services/labels reference, and Coolify tag v4.3.19:
+`app/Models/Application.php`, `bootstrap/helpers/proxy.php`, and
+`bootstrap/helpers/docker.php`.
+
+
 Use the review branch, base directory `/`, and Compose location
 `/compose.maus-mvp.yaml`. Select Raw Compose, isolated network only, manual
 deployments, and no public domain. Preserve source files needed by relative bind
