@@ -28,3 +28,14 @@
 - Se mantienen los 128 MiB de memoria y todas las restricciones de seguridad.
 - YAML validado; pendiente comprobar el arranque y consumo real del proxy corregido.
 - La configuración de Caddy derivado ha pasado la validación con ejecución restringida.
+
+### Exclusión de la detección automática de redes del proxy
+
+- Documentado el comportamiento del parser Raw y del selector de redes en Coolify
+  4.3.19: la gestión automática por etiqueta puede conectar el proxy compartido.
+- Añadida etiqueta de gestión con valor vacío y `traefik.enable=false` a los tres
+  servicios, conservando sus restricciones y redes. Compatibilidad específica de
+  versión; no cambia código ni ajustes globales de Coolify.
+- Revisado el código de selección por applicationId para despliegues manuales.
+  La monitorización automática puede verse limitada. Pendiente verificar etiquetas
+  reales y ausencia persistente del proxy compartido tras recrear contenedores.
