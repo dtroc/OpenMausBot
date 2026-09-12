@@ -2,6 +2,11 @@
 # Required image values must be immutable repository@sha256:... references.
 services:
   omb:
+    # Coolify 4.3.19 Raw: keep this key-only label to opt out of
+    # managed=true proxy-network discovery. Revalidate on Coolify upgrades.
+    labels:
+      - coolify.managed
+      - traefik.enable=false
     build:
       context: ./deploy/maus-mvp
       args:
@@ -68,6 +73,11 @@ services:
         max-file: "2"
 
   web:
+    # Coolify 4.3.19 Raw: keep this key-only label to opt out of
+    # managed=true proxy-network discovery. Revalidate on Coolify upgrades.
+    labels:
+      - coolify.managed
+      - traefik.enable=false
     build:
       context: ./deploy/maus-mvp
       dockerfile: Caddy.Dockerfile
@@ -104,6 +114,11 @@ services:
     logging: *bounded-logs
 
   egress:
+    # Coolify 4.3.19 Raw: keep this key-only label to opt out of
+    # managed=true proxy-network discovery. Revalidate on Coolify upgrades.
+    labels:
+      - coolify.managed
+      - traefik.enable=false
     image: ${MAUS_SQUID_IMAGE:?Set a verified Ubuntu Squid 6 or 7 image digest}
     user: "65534:65534"
     init: true
