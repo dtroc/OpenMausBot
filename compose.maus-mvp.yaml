@@ -68,7 +68,12 @@ services:
         max-file: "2"
 
   web:
-    image: ${MAUS_CADDY_IMAGE:?Set a verified Caddy image digest}
+    build:
+      context: ./deploy/maus-mvp
+      dockerfile: Caddy.Dockerfile
+      args:
+        BASE_IMAGE: ${MAUS_CADDY_IMAGE:?Set a verified Caddy image digest}
+    image: maus-mvp-web:restricted
     user: "65534:65534"
     init: true
     restart: "no"
