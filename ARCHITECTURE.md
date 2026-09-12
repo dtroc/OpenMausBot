@@ -11,3 +11,8 @@ acceptance gates are maintained in one place:
 Entry point: `compose.maus-mvp.yaml`. The original `compose.yaml` remains the
 upstream deployment. Updating fork source and updating the pinned runtime image
 are separate operations. No new application API is introduced by this change.
+
+Optional ingress: `compose.maus-tunnel.yaml` runs a dedicated Cloudflare connector
+in its own network. Host firewall permits only web ingress and required Cloudflare
+egress. Access JWT validation at the connector precedes Maus browser pairing.
+See the deployment README for configuration and acceptance requirements.
