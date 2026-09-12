@@ -39,3 +39,18 @@
 - Revisado el código de selección por applicationId para despliegues manuales.
   La monitorización automática puede verse limitada. Pendiente verificar etiquetas
   reales y ausencia persistente del proxy compartido tras recrear contenedores.
+
+### Acceso HTTPS mediante conector Cloudflare independiente
+
+- Añadido Compose separado para cloudflared, sin privilegios ni puertos publicados,
+  con una sola red, límites de recursos y token montado como archivo de solo lectura.
+- Caddy distingue el dominio HTTPS procedente del conector del acceso HTTP por SSH;
+  mantiene pairing, streaming y bloqueo de webhooks y rechaza otros hosts/orígenes.
+- Parametrizadas las URL públicas. Eliminado el mapeo de puerto inactivo en red
+  interna; el túnel SSH apunta directamente al contenedor.
+- Documentados Access, validación JWT en el conector, preparación del firewall,
+  límites de confianza y reversión.
+- El operador ha comprobado arranque de Squid sin OOM, etiquetas vacías, redes sin
+  proxy compartido, filtros básicos de salida, UI por SSH y autenticación de Codex.
+- Configuración nueva revisada estáticamente. Validación Caddy con imagen fijada y
+  flujo HTTPS/Access aún pendientes; no se han ejecutado agentes contra datos reales.
