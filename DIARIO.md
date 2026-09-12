@@ -1,56 +1,20 @@
 # Diario del fork
 
-## 2026-09-12 — Preparación de Maus MVP en Coolify
+## 2026-09-12 — Archivos de despliegue del MVP
 
-- Añadido `compose.maus-mvp.yaml` sin modificar el Compose original.
-- Separados servidor, proxy web local y proxy de salida Squid con dominios exactos.
-- Añadidos permisos mínimos, límites de recursos, bind de datos de mercado de solo
-  lectura, logs acotados y despliegue manual sin reinicio automático.
-- Versiones de imágenes y Codex obligatorias, pendientes de resolver en el VPS.
-- Documentados arquitectura, almacenamiento con cuota, preparación del host,
-  limitaciones del firewall al reiniciar/recargar y pruebas de aceptación.
-- Validación estática local; despliegue, parsers de imágenes y autenticación real
-  pendientes. No se ha ejecutado ningún agente ni accedido a datos del usuario.
+- Añadido `compose.maus-mvp.yaml` como alternativa al Compose upstream.
+- Añadidos archivos de construcción y configuración en `deploy/maus-mvp/`.
+- Ajustada la construcción de Caddy para compatibilidad con permisos reducidos.
+- Acotado el número de descriptores de archivo en el servicio de salida.
+- Añadidas etiquetas de compatibilidad para el despliegue mediante Compose.
+- Añadido `compose.maus-tunnel.yaml` como recurso opcional separado.
+- Parametrizadas las variables de origen público.
+- Corregido el matcher de Caddy para contemplar NAT entre redes.
+- Generalizada la guía pública y conservadas referencias a la documentación oficial.
 
-### Corrección de ejecución de Caddy
+### Alcance de la verificación
 
-- Confirmada la capacidad de archivo `cap_net_bind_service=ep` en la imagen
-  oficial seleccionada, incompatible con la ejecución restringida prevista.
-- Añadido `Caddy.Dockerfile` para quitar esa capacidad durante la construcción;
-  el servicio web usa la imagen derivada y mantiene usuario sin privilegios,
-  `cap_drop: ALL` y `no-new-privileges`.
-- La validación de ejecución y configuración de la imagen derivada sigue pendiente.
-
-### Límite de descriptores para Squid
-
-- Acotados a 1024 los descriptores de archivo en Docker y en Squid para evitar
-  reservas de memoria de arranque asociadas a límites heredados excesivos.
-- Se mantienen los 128 MiB de memoria y todas las restricciones de seguridad.
-- YAML validado; pendiente comprobar el arranque y consumo real del proxy corregido.
-- La configuración de Caddy derivado ha pasado la validación con ejecución restringida.
-
-### Exclusión de la detección automática de redes del proxy
-
-- Documentado el comportamiento del parser Raw y del selector de redes en Coolify
-  4.3.19: la gestión automática por etiqueta puede conectar el proxy compartido.
-- Añadida etiqueta de gestión con valor vacío y `traefik.enable=false` a los tres
-  servicios, conservando sus restricciones y redes. Compatibilidad específica de
-  versión; no cambia código ni ajustes globales de Coolify.
-- Revisado el código de selección por applicationId para despliegues manuales.
-  La monitorización automática puede verse limitada. Pendiente verificar etiquetas
-  reales y ausencia persistente del proxy compartido tras recrear contenedores.
-
-### Acceso HTTPS mediante conector Cloudflare independiente
-
-- Añadido Compose separado para cloudflared, sin privilegios ni puertos publicados,
-  con una sola red, límites de recursos y token montado como archivo de solo lectura.
-- Caddy distingue el dominio HTTPS procedente del conector del acceso HTTP por SSH;
-  mantiene pairing, streaming y bloqueo de webhooks y rechaza otros hosts/orígenes.
-- Parametrizadas las URL públicas. Eliminado el mapeo de puerto inactivo en red
-  interna; el túnel SSH apunta directamente al contenedor.
-- Documentados Access, validación JWT en el conector, preparación del firewall,
-  límites de confianza y reversión.
-- El operador ha comprobado arranque de Squid sin OOM, etiquetas vacías, redes sin
-  proxy compartido, filtros básicos de salida, UI por SSH y autenticación de Codex.
-- Configuración nueva revisada estáticamente. Validación Caddy con imagen fijada y
-  flujo HTTPS/Access aún pendientes; no se han ejecutado agentes contra datos reales.
+La revisión de estos archivos es estática. El operador debe validar las
+configuraciones con las imágenes seleccionadas y completar las comprobaciones
+funcionales descritas en la guía. Este diario no registra inventario del host,
+credenciales ni estado de autenticación de usuarios.
