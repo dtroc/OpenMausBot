@@ -20,3 +20,11 @@
   el servicio web usa la imagen derivada y mantiene usuario sin privilegios,
   `cap_drop: ALL` y `no-new-privileges`.
 - La validación de ejecución y configuración de la imagen derivada sigue pendiente.
+
+### Límite de descriptores para Squid
+
+- Acotados a 1024 los descriptores de archivo en Docker y en Squid para evitar
+  reservas de memoria de arranque asociadas a límites heredados excesivos.
+- Se mantienen los 128 MiB de memoria y todas las restricciones de seguridad.
+- YAML validado; pendiente comprobar el arranque y consumo real del proxy corregido.
+- La configuración de Caddy derivado ha pasado la validación con ejecución restringida.
