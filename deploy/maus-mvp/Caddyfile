@@ -5,12 +5,41 @@
 }
 
 :8080 {
-    # Backend 8799 remains bound to loopback in the shared network namespace.
-    # No hooks, public domain, managed tunnel, or public reverse proxy in this MVP.
-    @hooks path /hooks /hooks/*
-    respond @hooks 403
-    reverse_proxy 127.0.0.1:8799 {
-        header_up X-Forwarded-Proto http
-        flush_interval -1
+    route {
+        @hooks path /hooks /hooks/*
+        respond @hooks 403
+
+        # HTTPS has already terminated at Cloudflare. Only the dedicated
+        # connector may use this host. Access JWT validation belongs to
+        # cloudflared ("Protect with Access"), not to this Host matcher.
+        @cloudflare {
+            host {$MAUS_HTTPS_HOST:disabled.invalid}
+            remote_ip 172.30.52.2
+        }
+        handle @cloudflare {
+            reverse_proxy 127.0.0.1:8799 {
+                header_up -Forwarded
+                header_up X-Forwarded-Proto https
+                header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+                flush_interval -1
+            }
+        }
+
+        # SSH forwards to the container IP. Requests originate at the
+        # internal bridge gateway; retain HTTP cookies for localhost.
+        @ssh {
+            host localhost 127.0.0.1
+            remote_ip 127.0.0.1 ::1 172.30.50.1
+        }
+        handle @ssh {
+            reverse_proxy 127.0.0.1:8799 {
+                header_up -Forwarded
+                header_up X-Forwarded-Proto http
+                header_up X-Forwarded-For {http.request.remote.host}
+                flush_interval -1
+            }
+        }
+
+        respond 403
     }
 }
