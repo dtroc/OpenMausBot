@@ -1,0 +1,16 @@
+{
+    admin off
+    auto_https off
+    persist_config off
+}
+
+:8080 {
+    # Backend 8799 remains bound to loopback in the shared network namespace.
+    # No hooks, public domain, managed tunnel, or public reverse proxy in this MVP.
+    @hooks path /hooks /hooks/*
+    respond @hooks 403
+    reverse_proxy 127.0.0.1:8799 {
+        header_up X-Forwarded-Proto http
+        flush_interval -1
+    }
+}
