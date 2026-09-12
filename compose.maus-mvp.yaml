@@ -113,6 +113,10 @@ services:
     security_opt: ["no-new-privileges:true"]
     mem_limit: 128m
     memswap_limit: 128m
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 1024
     cpus: 0.15
     pids_limit: 32
     sysctls:
