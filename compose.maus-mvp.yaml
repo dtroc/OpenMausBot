@@ -1,4 +1,4 @@
-# Private UI through SSH only. See deploy/maus-mvp/README.md before deploying.
+# Private SSH UI, with optional Cloudflare Access ingress. See deployment README.
 # Required image values must be immutable repository@sha256:... references.
 services:
   omb:
@@ -31,8 +31,8 @@ services:
       OMB_DATA_DIR: /data/.openmausbot
       OMB_PORT: "8799"
       OMB_WEBHOOK_PORT: "8800"
-      OMB_PUBLIC_URL: http://localhost:18080
-      OMB_WEBHOOK_PUBLIC_URL: http://localhost:18080
+      OMB_PUBLIC_URL: ${MAUS_PUBLIC_URL:-http://localhost:18080}
+      OMB_WEBHOOK_PUBLIC_URL: ${MAUS_PUBLIC_URL:-http://localhost:18080}
       HTTP_PROXY: http://172.30.50.2:3128
       HTTPS_PROXY: http://172.30.50.2:3128
       http_proxy: http://172.30.50.2:3128
@@ -55,8 +55,6 @@ services:
     networks:
       internal:
         ipv4_address: 172.30.50.3
-    ports:
-      - "127.0.0.1:18080:8080"
     depends_on:
       egress:
         condition: service_started
@@ -99,6 +97,8 @@ services:
       - /tmp:rw,nosuid,nodev,noexec,size=8m,mode=1777
       - /data:rw,nosuid,nodev,noexec,size=8m,mode=1777
       - /config:rw,nosuid,nodev,noexec,size=8m,mode=1777
+    environment:
+      MAUS_HTTPS_HOST: ${MAUS_HTTPS_HOST:-disabled.invalid}
     entrypoint: [caddy]
     command: [run, --config, /etc/caddy/Caddyfile, --adapter, caddyfile]
     volumes:
