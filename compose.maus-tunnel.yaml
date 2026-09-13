@@ -1,0 +1,62 @@
+# Deploy as a separate Raw Compose application after host firewall setup.
+# Configure Access before publishing the hostname; enable Protect with Access.
+services:
+  cloudflared:
+    labels:
+      - coolify.managed
+      - traefik.enable=false
+    image: ${MAUS_CLOUDFLARED_IMAGE:?Set a verified cloudflare/cloudflared digest}
+    user: "65532:65532"
+    init: true
+    restart: "no"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 128m
+    memswap_limit: 128m
+    cpus: 0.20
+    pids_limit: 64
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 1024
+    sysctls:
+      net.ipv4.ip_forward: "0"
+      net.ipv6.conf.all.disable_ipv6: "1"
+    dns: [185.12.64.1, 185.12.64.2]
+    environment:
+      HOME: /tmp
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,noexec,size=16m,mode=1777
+    entrypoint: [cloudflared, --no-autoupdate]
+    command:
+      - tunnel
+      - --protocol
+      - http2
+      - --edge-ip-version
+      - "4"
+      - --metrics
+      - 127.0.0.1:2000
+      - run
+      - --token-file
+      - /run/secrets/cloudflared-token
+    volumes:
+      - type: bind
+        source: /opt/maus-mvp/secrets/cloudflared-token
+        target: /run/secrets/cloudflared-token
+        read_only: true
+        bind:
+          create_host_path: false
+    networks:
+      tunnel:
+        ipv4_address: 172.30.52.2
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: "2"
+
+networks:
+  tunnel:
+    external: true
+    name: maus-tunnel
