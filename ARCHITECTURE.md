@@ -16,3 +16,6 @@ Optional ingress: `compose.maus-tunnel.yaml` runs a dedicated Cloudflare connect
 in its own network. Host firewall permits only web ingress and required Cloudflare
 egress. Access JWT validation at the connector precedes Maus browser pairing.
 See the deployment README for configuration and acceptance requirements.
+
+Public configuration and operations summary (Spanish):
+[docs/CONFIGURACION_MVP.md](docs/CONFIGURACION_MVP.md).
